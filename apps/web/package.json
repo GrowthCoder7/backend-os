@@ -12,6 +12,9 @@
   },
   "dependencies": {
     "@repo/ui": "*",
+    "@repo/store": "*",
+    "@repo/types": "*",
+    "@repo/validation": "*",
     "next": "16.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
