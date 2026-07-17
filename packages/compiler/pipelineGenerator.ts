@@ -1,37 +1,20 @@
-import { ArchitectureGraph } from "@repo/types";
-import {validateGraph,ValidationIssue} from "@repo/validation"
-
-export interface CompilerManifest {
-  models: CompiledModel[];
-  routes: CompiledRoute[];
-  workflows: CompiledWorkflow[];
-}
-
-export interface CompiledModel {
-  tableName: string;
-  primaryKey: string;
-  fieldCount: number;
-}
-
-export interface CompiledRoute {
-  method: string;
-  path: string;
-  handlerId: string;
-}
-
-export interface CompiledWorkflow {
-  triggerEvent: string;
-  executionSteps: number;
-}
+import { 
+  ArchitectureGraph, 
+  BackendIR, 
+  CompiledModel, 
+  CompiledRoute, 
+  CompiledWorkflow 
+} from "@repo/types";
+import { validateGraph, ValidationIssue } from "@repo/validation";
 
 export interface CompilationResult {
   success: boolean;
   issues: ValidationIssue[];
-  manifest: CompilerManifest | null;
+  ir: BackendIR | null;
 }
 
 /**
- * Lowers the Architecture Graph into an executable Compiler Manifest.
+ * Lowers the Architecture Graph into the standard Backend IR.
  * Halts if structural errors are detected by the Validation Engine.
  */
 export const compileGraph = (graph: ArchitectureGraph): CompilationResult => {
@@ -44,33 +27,52 @@ export const compileGraph = (graph: ArchitectureGraph): CompilationResult => {
     return {
       success: false,
       issues,
-      manifest: null,
+      ir: null,
     };
   }
 
-  // 3. Generate Intermediate Representation (IR)
-  const manifest: CompilerManifest = {
-    models: Object.values(graph.entities).map((entity) => ({
-      tableName: entity.name.toLowerCase(),
-      primaryKey: entity.primaryKey,
-      fieldCount: entity.fields.length,
-    })),
+  // 3. Generate Backend Intermediate Representation (IR)
+  const ir: BackendIR = {
+    database: {
+      models: Object.values(graph.entities).map((entity) => ({
+        tableName: entity.name.toLowerCase(),
+        primaryKey: entity.primaryKey,
+        fields: [...entity.fields],
+        relations: graph.relations.filter(
+          (r) => r.source === entity.name || r.target === entity.name
+        ),
+      })),
+    },
     
-    routes: graph.endpoints.map((ep) => ({
-      method: ep.method.toUpperCase(),
-      path: ep.path,
-      handlerId: `${ep.method.toLowerCase()}_${ep.entity.toLowerCase()}`,
-    })),
+    apis: {
+      routes: graph.endpoints.map((ep) => ({
+        method: ep.method.toUpperCase(),
+        path: ep.path,
+        handlerId: `${ep.method.toLowerCase()}_${ep.entity.toLowerCase()}`,
+        entity: ep.entity,
+        action: ep.action,
+      })),
+    },
 
-    workflows: graph.workflows.map((wf) => ({
-      triggerEvent: wf.triggerEvent,
-      executionSteps: wf.steps.length,
-    })),
+    workflows: {
+      workflows: graph.workflows.map((wf) => ({
+        triggerEvent: wf.triggerEvent,
+        executionSteps: wf.steps.length,
+        steps: [...wf.steps],
+      })),
+    },
+
+    events: { ...graph.events },
+    
+    metadata: {
+      version: "1.0.0",
+      generatedAt: new Date().toISOString(),
+    },
   };
 
   return {
     success: true,
     issues, // Pass along any warnings
-    manifest,
+    ir,
   };
 };

@@ -107,3 +107,58 @@ export interface ArchitectureGraph {
   workflows: Workflow[];
 
 }
+
+// ==========================================
+// BACKEND IR (INTERMEDIATE REPRESENTATION)
+// ==========================================
+
+export interface CompiledModel {
+  tableName: string;
+  primaryKey: string;
+  fields: Field[]; // Passed through for generator plugins
+  relations: Relation[]; // Scoped relations for this specific model
+}
+
+export interface CompiledRoute {
+  method: string;
+  path: string;
+  handlerId: string;
+  entity: string;
+  action: "create" | "read" | "update" | "delete";
+}
+
+export interface CompiledWorkflow {
+  triggerEvent: string;
+  executionSteps: number;
+  steps: PipelineStep[];
+}
+
+export interface DatabaseIR {
+  models: CompiledModel[];
+}
+
+export interface ApiIR {
+  routes: CompiledRoute[];
+}
+
+export interface WorkflowIR {
+  workflows: CompiledWorkflow[];
+}
+
+export interface BackendIR {
+  database: DatabaseIR;
+  apis: ApiIR;
+  workflows: WorkflowIR;
+  events: Record<string, Event>;
+  metadata: {
+    version: string;
+    generatedAt: string;
+  };
+}
+
+export interface GeneratedArtifacts {
+  prisma?: string;
+  server?: string;      // Express initialization
+  routes?: string;      // Express router definitions
+  controllers?: string; // Route handlers
+}
