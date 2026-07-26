@@ -92,9 +92,20 @@ export interface Workflow {
 
 }
 
-
+export interface ProjectMetadata  {
+  id:string
+  name:string
+  description?:string
+  version?:string
+  createdAt:string
+  updatedAt:string
+  compilerVersion:string
+  schemaVersion:string
+}
 
 export interface ArchitectureGraph {
+
+  metadata:ProjectMetadata
 
   entities: Record<string, Entity>;
 
