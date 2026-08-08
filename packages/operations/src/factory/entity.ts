@@ -4,16 +4,14 @@ import { CreateEntityPayload } from "../entity/create";
 import { UpdateEntityPayload } from "../entity/update";
 import { DeleteEntityPayload } from "../entity/delete";
 
-// Utility for ID generation without relying on external packages
 const generateId = (): string => {
-  return typeof crypto !== "undefined" && crypto.randomUUID 
-    ? crypto.randomUUID() 
-    : Math.random().toString(36).substring(2, 15);
+  return crypto.randomUUID();
 };
 
-// Utility to ensure metadata is always present
 const createDefaultMetadata = (metadata?: Partial<OperationMetadata>): OperationMetadata => ({
   timestamp: new Date().toISOString(),
+  source: "builder",
+  version: 1,
   ...metadata,
 });
 
