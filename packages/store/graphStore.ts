@@ -10,6 +10,14 @@ import {
   Workflow 
 } from "@repo/types";
 
+// IMPORT DEV A'S CANONICAL FACTORY
+import { createEntityOperation } from "@repo/operations";
+import { OperationExecutor, OperationRegistry, EntityCreateHandler } from "@repo/executor";
+
+const registry = new OperationRegistry();
+registry.register("entity.create", new EntityCreateHandler());
+const executor = new OperationExecutor(registry);
+
 // The shape of our store encompasses the core graph and atomic mutators.
 interface GraphState {
   graph: ArchitectureGraph;
@@ -29,6 +37,14 @@ interface GraphState {
 }
 
 const initialGraph: ArchitectureGraph = {
+  metadata: {
+    id: "default-project",
+    name: "Default Project",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    compilerVersion: "1.0.0",
+    schemaVersion: "1.0.0"
+  },
   entities: {},
   relations: [],
   endpoints: [],
@@ -43,10 +59,29 @@ export const useGraphStore = create<GraphState>()(
     // O(1) Normalization allows direct assignment
     addEntity: (entity) =>
       set((state) => {
-        if (state.graph.entities[entity.name]) {
-            throw new Error(`Entity ${entity.name} already exists.`);
+        // 1. DELEGATE TO DEV A'S FACTORY (Handles ID, Type, Metadata, Payload)
+        const operation = createEntityOperation({ entity });
+
+        // 2. CONSTRUCT CONTEXT
+        const context = {
+          graph: current(state.graph),
+          services: {},
+          validation: { validate: validateGraph }
+        };
+
+        // 3. EXECUTE
+        const result = executor.execute(operation, context);
+
+        // 4. ROLLBACK / ERROR BUBBLING
+        if (!result.success) {
+          const errors = result.diagnostics
+            .filter(d => d.severity === "error")
+            .map(d => d.message).join(" | ");
+          throw new Error(errors);
         }
-        state.graph.entities[entity.name] = entity;
+
+        // 5. COMMIT IMMUTABLE AST
+        state.graph = result.graph;
       }),
 
     updateEntity: (oldName, partialEntity) =>
