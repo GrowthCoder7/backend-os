@@ -10,6 +10,9 @@ import {
   Workflow 
 } from "@repo/types";
 
+import {current} from 'immer'
+import {validateGraph} from '@repo/validation'
+
 // IMPORT DEV A'S CANONICAL FACTORY
 import { createEntityOperation } from "@repo/operations";
 import { OperationExecutor, OperationRegistry, EntityCreateHandler } from "@repo/executor";
@@ -87,7 +90,9 @@ export const useGraphStore = create<GraphState>()(
     updateEntity: (oldName, partialEntity) =>
       set((state) => {
         const entity = state.graph.entities[oldName];
-        if (!entity) return;
+        if (!entity){
+          throw new Error(`Entity '${oldName} not found'`)
+        };
 
         const newName = partialEntity.name;
         const isRenaming = newName !== undefined && newName !== oldName;
@@ -116,7 +121,11 @@ export const useGraphStore = create<GraphState>()(
           });
         } else {
           // Standard field update (no rename)
-          Object.assign(state.graph.entities[oldName], partialEntity);
+          const entity = state.graph.entities[oldName]
+          if(!entity){
+            throw new Error(`Entity '${oldName}' not found`)
+          }
+          Object.assign(entity, partialEntity);
         }
       }),
 
