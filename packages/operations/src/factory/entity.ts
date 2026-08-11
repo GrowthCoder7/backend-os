@@ -1,8 +1,8 @@
 import { ArchitectureOperation } from "../operation";
 import { OperationMetadata } from "../metadata";
-import { CreateEntityPayload } from "../entity/create";
-import { UpdateEntityPayload } from "../entity/update";
-import { DeleteEntityPayload } from "../entity/delete";
+import { CreateEntityPayload,EntityCreateOperation } from "../entity/create";
+import { UpdateEntityPayload,EntityUpdateOperation } from "../entity/update";
+import { DeleteEntityPayload,EntityDeleteOperation } from "../entity/delete";
 
 const generateId = (): string => {
   return crypto.randomUUID();
@@ -18,7 +18,7 @@ const createDefaultMetadata = (metadata?: Partial<OperationMetadata>): Operation
 export const createEntityOperation = (
   payload: CreateEntityPayload,
   metadata?: Partial<OperationMetadata>
-): ArchitectureOperation<"entity.create", CreateEntityPayload> => ({
+): EntityCreateOperation => ({
   id: generateId(),
   type: "entity.create",
   payload,
@@ -28,7 +28,7 @@ export const createEntityOperation = (
 export const updateEntityOperation = (
   payload: UpdateEntityPayload,
   metadata?: Partial<OperationMetadata>
-): ArchitectureOperation<"entity.update", UpdateEntityPayload> => ({
+): EntityUpdateOperation => ({
   id: generateId(),
   type: "entity.update",
   payload,
@@ -38,7 +38,7 @@ export const updateEntityOperation = (
 export const deleteEntityOperation = (
   payload: DeleteEntityPayload,
   metadata?: Partial<OperationMetadata>
-): ArchitectureOperation<"entity.delete", DeleteEntityPayload> => ({
+): EntityDeleteOperation => ({
   id: generateId(),
   type: "entity.delete",
   payload,
