@@ -297,9 +297,10 @@ When conflicts arise, decisions are resolved according to the following order:
 1. Project Constitution
 2. Architecture Specification
 3. Approved RFCs
-4. Engineering Playbook
-5. Sprint Specifications
-6. Implementation
+4. Master Context
+5. Decision Records
+6. Sprint Specifications
+7. Implementation
 
 No implementation may contradict a higher-level document.
 
@@ -328,3 +329,16 @@ The purpose of an RFC is to ensure that architectural evolution is intentional, 
 ### RFC Lifecycle
 
 Every RFC follows the same lifecycle:
+
+### Decision Records
+
+Architectural decisions are recorded as ADRs.
+
+Engineering and implementation decisions are recorded in
+DECISIONS.md when they have meaningful long-term relevance.
+
+DECISIONS.md does not override the Project Constitution,
+Architecture Specification, or Domain Model Specification.
+
+An architectural decision that changes an approved architectural
+constraint must follow the ADR/RFC process.

@@ -9,13 +9,13 @@
 | Property | Value |
 |----------|-------|
 | Document | BACKEND_OS_MASTER_CONTEXT.md |
-| Version | 1.0.0 |
+| Version | 1.1.0 |
 | Status | Active |
 | Authority | Canonical Engineering Context |
 | Architecture Version | 1.0 (Frozen) |
-| Repository Phase | Active Development |
+| Repository Phase | Phase 2 — Core Platform Development |
 | Project Type | Compiler Platform |
-| Last Updated | 26 July 2026 |
+| Last Updated | 11 August 2026 |
 
 ---
 
@@ -61,23 +61,27 @@ The default assumption throughout the project is:
 
 # Canonical Documents
 
-Backend OS is defined by the following documents, listed in order of authority:
+Backend OS is defined by the following canonical documents:
 
-1. `BACKEND_OS_MASTER_CONTEXT.md`
-2. `00_PROJECT_CONSTITUTION.md`
-3. `01_ARCHITECTURE_SPECIFICATION.md`
-4. `02_DOMAIN_MODEL_SPECIFICATION.md`
+1. `00_PROJECT_CONSTITUTION.md`
+2. `01_ARCHITECTURE_SPECIFICATION.md`
+3. `02_DOMAIN_MODEL_SPECIFICATION.md`
+4. `03_BACKEND_OS_MASTER_CONTEXT.md`
+5. `DECISIONS.md`
 
 Each document has a distinct responsibility.
 
 | Document | Responsibility |
 |----------|----------------|
-| Master Context | Engineering memory, methodology, implementation status, architectural decisions |
 | Project Constitution | Vision, philosophy, governance, engineering values |
 | Architecture Specification | System architecture, compiler pipeline, subsystem responsibilities |
 | Domain Model Specification | Canonical domain objects and platform vocabulary |
+| Master Context | Current engineering context, methodology, implementation status, roadmap, and project knowledge |
+| DECISIONS.md | Accepted engineering and implementation decisions that should remain traceable |
 
-When documents appear to overlap, the higher-level document takes precedence.
+Architectural decisions that change the approved architecture are recorded as ADRs and reflected in the appropriate canonical specification.
+
+DECISIONS.md does not override the Project Constitution, Architecture Specification, Domain Model Specification, or approved ADRs.
 
 Implementation must never contradict a higher-level specification.
 
@@ -87,10 +91,6 @@ Implementation must never contradict a higher-level specification.
 
 Backend OS follows a strict engineering hierarchy.
 
-```
-Master Context
-        │
-        ▼
 Project Constitution
         │
         ▼
@@ -103,17 +103,13 @@ Domain Model Specification
 Architectural Decision Records
         │
         ▼
-Engineering Decisions
+Master Context
+        │
+        ▼
+DECISIONS.md
         │
         ▼
 Implementation
-```
-
-Changes flow downward.
-
-Authority never flows upward.
-
-Implementation may reveal architectural shortcomings, but it may not redefine architecture without an approved ADR.
 
 ---
 
@@ -1074,7 +1070,8 @@ Current repository progress includes:
 
 ### In Progress
 
-- Operation execution refinement
+- Operation system expansion
+- Operation execution coverage
 - Compiler pass expansion
 - Plugin Registry
 - Generator framework
@@ -1700,13 +1697,18 @@ User Intent
 Architecture Operation
       │
       ▼
-Operation Execution
+Operation Executor
       │
       ▼
-Architecture Graph
+Candidate Architecture Graph
       │
       ▼
 Validation
+      │
+      ├── Failure ──► Reject
+      │
+      ▼
+Committed Architecture Graph
       │
       ▼
 Semantic Analysis
@@ -1953,9 +1955,13 @@ All state changes originate from Architecture Operations.
 
 ---
 
-### Mutation Precedes Validation
+### Candidate State Precedes Commit
 
-Validation always evaluates the current architectural state.
+Operation execution constructs the candidate Architecture Graph state.
+
+Validation evaluates the candidate state before it becomes the committed architectural state.
+
+A validation failure prevents the candidate state from being committed.
 
 ---
 
@@ -2009,341 +2015,7 @@ No subsystem is permitted to bypass, shortcut, or redefine this lifecycle.
 
 Every future capability should integrate into this execution model rather than introduce an alternative processing path.
 
-# 7. System Lifecycle & Execution Flow
-
-## Purpose
-
-This section describes how Backend OS operates during normal execution.
-
-Rather than focusing on individual components, it follows the lifecycle of architectural information as it moves through the platform.
-
-Understanding this lifecycle is essential for implementing new features, debugging compiler behavior, and preserving the deterministic nature of the platform.
-
-Every subsystem participates in this lifecycle through clearly defined inputs and outputs.
-
----
-
-# High-Level Lifecycle
-
-Backend OS transforms user intent into executable backend software through a sequence of deterministic stages.
-
-```
-User Intent
-      │
-      ▼
-Architecture Operation
-      │
-      ▼
-Operation Execution
-      │
-      ▼
-Architecture Graph
-      │
-      ▼
-Validation
-      │
-      ▼
-Semantic Analysis
-      │
-      ▼
-Compiler
-      │
-      ▼
-Backend IR
-      │
-      ▼
-Generators
-      │
-      ▼
-Generated Backend
-```
-
-Every stage consumes a well-defined representation and produces another.
-
-No stage bypasses another.
-
----
-
-# Stage 1 — Capturing User Intent
-
-The lifecycle begins when a developer expresses architectural intent.
-
-Intent may originate from:
-
-- Visual Builder
-- AI Assistant
-- CLI
-- Importers
-- Future APIs
-- External Plugins
-
-These interfaces never modify the Architecture Graph directly.
-
-Instead, they construct Architecture Operations that describe the requested change.
-
-Examples include:
-
-- Create Entity
-- Delete Endpoint
-- Rename Field
-- Add Relationship
-- Create Workflow
-
-User interfaces are therefore producers of intent rather than owners of state.
-
----
-
-# Stage 2 — Architecture Operations
-
-Every requested modification becomes an immutable Architecture Operation.
-
-An operation represents *what should happen*, not *how it happens*.
-
-Operations are responsible for expressing intent in a deterministic, framework-independent manner.
-
-Typical operation metadata includes:
-
-- Operation Type
-- Target Object
-- Parameters
-- Timestamp
-- Version
-- Source
-- Validation Context
-
-Because every change is represented explicitly, Backend OS maintains a complete history of architectural evolution.
-
----
-
-# Stage 3 — Operation Execution
-
-The Operation Executor receives Architecture Operations and applies them to the Architecture Graph.
-
-Its responsibilities include:
-
-- Structural validation
-- Dependency verification
-- Conflict detection
-- State mutation
-- Event emission
-- History recording
-
-The executor is the only subsystem permitted to mutate architectural state.
-
-This guarantees consistency regardless of how the operation originated.
-
----
-
-# Stage 4 — Architecture Graph Update
-
-Successful execution produces an updated Architecture Graph.
-
-The graph now represents the complete architectural state of the backend.
-
-The graph is:
-
-- Canonical
-- Editable
-- Framework-independent
-- Deterministic
-- Serializable
-- Versionable
-
-Every subsequent subsystem consumes this graph.
-
-No additional editable model exists.
-
----
-
-# Stage 5 — Validation
-
-The Validation Engine verifies that the Architecture Graph satisfies all structural and architectural constraints.
-
-Typical validation categories include:
-
-- Entity correctness
-- Relationship consistency
-- Endpoint integrity
-- Workflow validity
-- Naming conventions
-- Referential integrity
-- Architectural invariants
-
-Validation never modifies the graph.
-
-Its responsibility is diagnosis rather than correction.
-
----
-
-# Stage 6 — Semantic Analysis
-
-After structural correctness has been established, Backend OS constructs semantic knowledge.
-
-Semantic Analysis is responsible for understanding architecture rather than merely verifying structure.
-
-Examples include:
-
-- Symbol resolution
-- Type inference
-- Dependency graphs
-- Cross-reference analysis
-- Entity relationships
-- Execution semantics
-
-The result is a rich semantic model that prepares the architecture for compilation.
-
----
-
-# Stage 7 — Compilation
-
-The Compiler transforms architectural knowledge into Backend Intermediate Representation (Backend IR).
-
-Compiler responsibilities include:
-
-- Graph normalization
-- Semantic lowering
-- Compiler passes
-- Optimization
-- Artifact preparation
-- IR construction
-
-Compilation is deterministic.
-
-No framework-specific logic exists within this stage.
-
----
-
-# Stage 8 — Backend Intermediate Representation
-
-Backend IR represents the complete implementation model of the backend.
-
-Unlike the Architecture Graph, Backend IR is optimized for generation rather than editing.
-
-It contains all information required to produce backend applications without exposing architectural editing concerns.
-
-Backend IR serves as the permanent contract between the compiler and generators.
-
----
-
-# Stage 9 — Code Generation
-
-Generators translate Backend IR into implementation artifacts.
-
-Possible outputs include:
-
-- Application source code
-- Database schemas
-- REST APIs
-- GraphQL APIs
-- ORM configuration
-- Documentation
-- Deployment configuration
-- Testing scaffolding
-
-Every generator operates independently.
-
-Multiple generators may consume the same Backend IR simultaneously.
-
----
-
-# Stage 10 — Generated Backend
-
-The lifecycle concludes with the production of a complete backend application.
-
-Generated applications are no longer part of Backend OS itself.
-
-They represent compiler outputs that may be deployed, modified, tested, and maintained independently.
-
-Backend OS remains responsible only for regenerating them from architecture.
-
----
-
-# Cross-Cutting Processes
-
-Several platform services operate alongside the primary lifecycle without modifying it.
-
-These include:
-
-- Live Diagnostics
-- Compiler Preview
-- Inspector
-- Graph Visualization
-- AI Assistance
-- Plugin Framework
-- Logging
-- Telemetry
-
-These services observe architectural state but do not participate in architectural mutation.
-
----
-
-# Lifecycle Invariants
-
-The execution lifecycle must always satisfy the following invariants.
-
-### Intent Precedes Mutation
-
-All state changes originate from Architecture Operations.
-
----
-
-### Mutation Precedes Validation
-
-Validation always evaluates the current architectural state.
-
----
-
-### Validation Precedes Compilation
-
-Compilation begins only after successful validation.
-
----
-
-### Compilation Precedes Generation
-
-Generators consume Backend IR rather than architectural models.
-
----
-
-### Generation Never Modifies Architecture
-
-Generated artifacts cannot change the Architecture Graph.
-
----
-
-### Compiler Stages Remain Deterministic
-
-Identical inputs always produce identical outputs.
-
----
-
-# Failure Handling
-
-Failures are contained within the stage where they occur.
-
-Examples include:
-
-- Invalid operations are rejected before graph mutation.
-- Validation failures prevent compilation.
-- Semantic failures prevent Backend IR generation.
-- Generator failures never corrupt the compiler.
-- Platform service failures never modify architectural state.
-
-This isolation ensures that failures remain localized and predictable.
-
----
-
-# Engineering Principle
-
-The execution lifecycle reflects the central philosophy of Backend OS:
-
-> **Architecture flows forward through deterministic transformations until it becomes executable software.**
-
-No subsystem is permitted to bypass, shortcut, or redefine this lifecycle.
-
-Every future capability should integrate into this execution model rather than introduce an alternative processing path.
-
-# 7. Repository & Package Guide
+# 9. Repository & Package Guide
 
 ## Purpose
 
@@ -2522,17 +2194,22 @@ This package contains architectural knowledge only.
 
 Purpose
 
-Represents every architectural mutation.
+Represents architectural mutations as immutable Architecture Operations.
 
 Responsibilities
 
 - Operation definitions
 - Operation metadata
-- History
-- Undo / Redo support
-- Future collaboration primitives
+- Operation payload contracts
+- Operation factories
 
-No business logic belongs here.
+Future capabilities:
+
+- History
+- Undo / Redo
+- Collaboration primitives
+
+No graph mutation or business logic belongs here.
 
 ---
 
@@ -2540,14 +2217,22 @@ No business logic belongs here.
 
 Purpose
 
-Applies Architecture Operations to the Architecture Graph.
+Executes Architecture Operations against the Architecture Graph.
 
-Responsibilities
+Current responsibilities
 
-- Execute operations
-- Validate mutations
-- Update graph
-- Emit events
+- Operation registry
+- Operation handler resolution
+- Candidate graph construction
+- Validation-gated commit
+- Execution diagnostics
+
+Future capabilities:
+
+- Dependency verification
+- Conflict detection
+- Event emission
+- History integration
 
 This package owns architectural mutation.
 
@@ -2702,32 +2387,35 @@ UI
  ▼
 Store
  │
- ▼
-Operations
+ ├──────────────► Operations
+ │                    │
+ │                    ▼
+ │                  Types
  │
- ▼
-Executor
- │
- ▼
-Graph
- │
- ▼
-Validation
- │
- ▼
-Semantic
- │
- ▼
-Compiler
- │
- ▼
-Backend IR
- │
- ▼
-Generators
+ └──────────────► Executor
+                      │
+             ┌────────┴────────┐
+             ▼                 ▼
+        Operations         Validation
+             │                 │
+             └──────► Types ◄──┘
+                        │
+                        ▼
+                    Semantic
+                        │
+                        ▼
+                    Compiler
+                        │
+                        ▼
+                    Backend IR
+                        │
+                        ▼
+                    Generators
 ```
 
 Dependencies should never flow in reverse.
+
+The dependency graph represents package dependencies, while the execution lifecycle represents runtime data flow. These two graphs must not be conflated.
 
 ---
 
@@ -2803,6 +2491,7 @@ Development is focused on constructing the compiler platform rather than refinin
 
 The current engineering effort is concentrated on the following areas:
 
+- Editing Engine
 - Visual Builder
 - Compiler Pipeline
 - Validation Engine
@@ -2833,6 +2522,36 @@ The following capabilities have been implemented and are considered operational.
 - Shared state management
 - Package boundaries
 - Public package interfaces
+
+---
+
+## Editing Engine — Sprint 1
+
+Implemented:
+
+- Canonical `@repo/operations` package
+- Immutable Architecture Operation contracts
+- Entity create/update/delete operation payloads
+- Operation metadata contract
+- Operation factory functions
+- Canonical operation IDs using `crypto.randomUUID()`
+- `@repo/executor` package
+- Operation registry
+- Operation executor
+- Entity create handler
+- Dependency-injected validation during execution
+- Immutable graph progression
+- Validation-gated commit / rollback behavior
+- Store integration through the canonical operation factory
+- Entity creation routed through the Operation Executor
+- Duplicate operation implementations removed
+- Cross-package type alignment verified
+
+Sprint 1 verification:
+
+- Typecheck passed
+- Build passed
+- Runtime/integration verification passed
 
 ---
 
@@ -2938,17 +2657,17 @@ The repository currently contains implementation across the following major pack
 | compiler | Active Development |
 | graph | Active Development |
 | validation | Active Development |
-| operations | Planned |
-| executor | Planned |
+| operations | Sprint 1 Complete |
+| executor | Sprint 1 Complete |
 | semantic | Planned |
 | generators | Planned |
 | plugins | Planned |
 | types | Active Development |
-| store | Active Development |
+| store | Sprint 1 Integration Complete |
 | ui | Active Development |
 | utils | Active Development |
 
-Package status should reflect implementation maturity rather than code volume.
+Package status reflects implementation maturity rather than code volume.
 
 ---
 
@@ -2956,15 +2675,16 @@ Package status should reflect implementation maturity rather than code volume.
 
 Near-term priorities include:
 
-1. Complete the Architecture Graph foundation.
-2. Finalize the Operation system.
-3. Implement the Operation Executor.
+1. Expand the Architecture Operation system beyond the initial entity slice.
+2. Complete operation execution coverage for remaining architectural mutations.
+3. Establish the next compiler/semantic integration boundary.
 4. Expand semantic analysis.
 5. Mature Backend IR.
 6. Establish the generator framework.
 7. Introduce the Plugin Registry.
 
-These priorities represent the current implementation roadmap and may evolve over time.
+Sprint 1 established the initial Operation → Executor → Graph integration path.
+Future work should extend this foundation rather than introduce parallel mutation paths.
 
 ---
 
@@ -2977,6 +2697,8 @@ Known areas requiring future refinement include:
 - Incomplete compiler passes
 - Missing optimization stages
 - Builder consistency improvements
+- Operation coverage currently limited to the implemented entity-create execution path
+- Monorepo typecheck orchestration remains dependent on workspace-level task configuration
 
 Technical debt should remain visible and intentionally managed.
 
@@ -3008,7 +2730,7 @@ Contributors should update this section whenever a subsystem reaches a meaningfu
 
 Historical implementation details should not be retained here; this section should always reflect the current state of the repository.
 
-# 9. Roadmap & Milestones
+# 10. Roadmap & Milestones
 
 ## Purpose
 
@@ -3057,7 +2779,7 @@ Establish the structural backbone of Backend OS.
 - Core packages are operational.
 - Development workflow is established.
 
-**Status:** In Progress
+**Status:** Completed
 
 ---
 
@@ -3104,7 +2826,23 @@ Implement the deterministic editing pipeline.
 - Every architectural modification flows through the Operation system.
 - Direct graph mutation is eliminated.
 
-**Status:** Planned
+**Status:** In Progress
+
+### Completed Foundation
+
+Sprint 1 established the first operational vertical slice:
+
+Architecture Operation
+        ↓
+Operation Executor
+        ↓
+Validation
+        ↓
+Graph Commit / Rollback
+        ↓
+Store Integration
+
+The milestone remains in progress until the complete editing engine scope is implemented and verified.
 
 ---
 
@@ -3263,7 +3001,7 @@ Milestones should be updated when:
 
 Completed milestones should remain documented as part of the project's engineering history, providing a clear record of the platform's evolution.
 
-# 10. Project Knowledge Base
+# 11. Project Knowledge Base
 
 ## Purpose
 
@@ -3317,6 +3055,10 @@ Examples include:
 - Shared platform contracts significantly reduce cross-package inconsistencies.
 
 Lessons should be concise, actionable, and based on real engineering experience.
+
+- Parallel contributors must consume one canonical public contract; duplicate package contracts create integration drift.
+- Execution should validate candidate state before committing architectural mutation.
+- Integration verification must include the actual monorepo build/typecheck path rather than relying only on package-local compilation claims.
 
 ---
 
@@ -3377,6 +3119,8 @@ These definitions should remain consistent throughout the repository and documen
 | Generator | A framework-specific translator that consumes Backend IR. |
 | Builder | A user-facing interface for creating or modifying architecture. |
 | Platform Service | Supporting tooling that observes the platform without participating in compilation. |
+| Candidate Graph | The graph state produced by an operation before validation-gated commit. |
+| Committed Graph | The validated Architecture Graph state accepted as the current architectural state. |
 
 All contributors should use these terms consistently.
 
