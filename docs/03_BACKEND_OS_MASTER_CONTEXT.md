@@ -15,7 +15,7 @@
 | Architecture Version | 1.0 (Frozen) |
 | Repository Phase | Phase 2 — Core Platform Development |
 | Project Type | Compiler Platform |
-| Last Updated | 11 August 2026 |
+| Last Updated | 12 August 2026 |
 
 ---
 
@@ -2531,7 +2531,7 @@ Implemented:
 
 - Canonical `@repo/operations` package
 - Immutable Architecture Operation contracts
-- Entity create/update/delete operation payloads
+- Entity create/update/delete operation payloads contracts
 - Operation metadata contract
 - Operation factory functions
 - Canonical operation IDs using `crypto.randomUUID()`
@@ -2552,6 +2552,76 @@ Sprint 1 verification:
 - Typecheck passed
 - Build passed
 - Runtime/integration verification passed
+
+---
+
+## Editing Engine — Sprint 2
+
+### Scope
+
+Sprint 2 extends the Editing Engine beyond the initial entity-create
+vertical slice to support the remaining entity lifecycle operations:
+
+- Entity Update
+- Entity Delete
+- Validation-gated execution
+- Commit / rollback behavior
+- Store integration through the Operation Executor
+
+### Implementation Status
+
+Implemented:
+
+- `entity.update` operation execution path
+- `entity.delete` operation execution path
+- Entity update handler
+- Entity delete handler
+- Operation Registry registration for update/delete
+- Store integration for update/delete
+- Candidate graph construction
+- Validation before commit
+- Failure preservation of the previously committed graph
+
+### Verification Status
+
+Repository-level implementation has been completed and type/build
+verification has passed.
+
+Behavioral verification has been completed through the
+repository-resident `verify-sprint2.ts` integration harness.
+
+The verification was executed against the actual repository and all
+Sprint 2 verification tests passed.
+
+Verified behaviors include:
+
+- Entity creation
+- Entity update
+- Nonexistent entity update rejection
+- Invalid update rollback
+- Entity identity protection
+- Entity deletion
+- Nonexistent entity deletion rejection
+- Referential-integrity deletion rejection
+- Duplicate-create regression
+- Compiler compatibility
+
+Repository verification also passed:
+
+- `npm --workspace=web run check-types`
+- `npm run build`
+- Sprint 2 integration verification via `verify-sprint2.ts`
+
+Sprint 2 entity lifecycle execution is therefore considered complete.
+
+### Important Verification Rule
+
+AI-generated implementation reports are not considered repository
+evidence by themselves.
+
+A verification claim becomes authoritative only when the corresponding
+test or verification procedure is executed against the actual repository
+and its result is independently confirmed.
 
 ---
 
@@ -2657,13 +2727,13 @@ The repository currently contains implementation across the following major pack
 | compiler | Active Development |
 | graph | Active Development |
 | validation | Active Development |
-| operations | Sprint 1 Complete |
-| executor | Sprint 1 Complete |
+| operations | Sprint 2 Complete |
+| executor | Sprint 2 Complete |
 | semantic | Planned |
 | generators | Planned |
 | plugins | Planned |
 | types | Active Development |
-| store | Sprint 1 Integration Complete |
+| store | Sprint 2 Integration Complete |
 | ui | Active Development |
 | utils | Active Development |
 
@@ -2675,16 +2745,20 @@ Package status reflects implementation maturity rather than code volume.
 
 Near-term priorities include:
 
-1. Expand the Architecture Operation system beyond the initial entity slice.
-2. Complete operation execution coverage for remaining architectural mutations.
-3. Establish the next compiler/semantic integration boundary.
-4. Expand semantic analysis.
-5. Mature Backend IR.
-6. Establish the generator framework.
-7. Introduce the Plugin Registry.
+1. Expand operation execution coverage to remaining architectural mutations.
+2. Establish the next compiler/semantic integration boundary.
+3. Expand semantic analysis.
+4. Mature Backend IR.
+5. Establish the generator framework.
+6. Introduce the Plugin Registry.
+7. Continue Editing Engine capabilities including history, undo/redo,
+   and additional mutation domains.
 
 Sprint 1 established the initial Operation → Executor → Graph integration path.
-Future work should extend this foundation rather than introduce parallel mutation paths.
+Sprint 2 completed the entity lifecycle execution slice.
+
+Future work should extend this foundation rather than introduce parallel
+mutation paths.
 
 ---
 
@@ -2697,7 +2771,8 @@ Known areas requiring future refinement include:
 - Incomplete compiler passes
 - Missing optimization stages
 - Builder consistency improvements
-- Operation coverage currently limited to the implemented entity-create execution path
+- Operation coverage currently limited to the implemented entity lifecycle operations; relationships, endpoints, events, and workflows remain outside the completed operation execution surface
+- Sprint 2 behavioral verification is repository-backed through `verify-sprint2.ts`; future Editing Engine changes must preserve and extend this verification approach.
 - Monorepo typecheck orchestration remains dependent on workspace-level task configuration
 
 Technical debt should remain visible and intentionally managed.
@@ -2827,6 +2902,17 @@ Implement the deterministic editing pipeline.
 - Direct graph mutation is eliminated.
 
 **Status:** In Progress
+
+Milestone 3 — Editing Engine
+             ↓
+         IN PROGRESS
+             ↓
+     Sprint 1 — Create
+     Sprint 2 — Update/Delete
+             ↓
+     Future — History
+     Future — Undo/Redo
+     Future — Other mutations
 
 ### Completed Foundation
 
