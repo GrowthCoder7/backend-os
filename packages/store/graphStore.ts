@@ -14,11 +14,13 @@ import {current} from 'immer'
 import {validateGraph} from '@repo/validation'
 
 // IMPORT DEV A'S CANONICAL FACTORY
-import { createEntityOperation } from "@repo/operations";
-import { OperationExecutor, OperationRegistry, EntityCreateHandler } from "@repo/executor";
+import { createEntityOperation,updateEntityOperation,deleteEntityOperation} from "@repo/operations";
+import { OperationExecutor, OperationRegistry, EntityCreateHandler, EntityUpdateHandler,EntityDeleteHandler } from "@repo/executor";
 
 const registry = new OperationRegistry();
 registry.register("entity.create", new EntityCreateHandler());
+registry.register("entity.update", new EntityUpdateHandler());
+registry.register("entity.delete", new EntityDeleteHandler());
 const executor = new OperationExecutor(registry);
 
 // The shape of our store encompasses the core graph and atomic mutators.
@@ -87,53 +89,42 @@ export const useGraphStore = create<GraphState>()(
         state.graph = result.graph;
       }),
 
-    updateEntity: (oldName, partialEntity) =>
+    updateEntity: (name, partialEntity) =>
       set((state) => {
-        const entity = state.graph.entities[oldName];
-        if (!entity){
-          throw new Error(`Entity '${oldName} not found'`)
+        const operation = updateEntityOperation({ name, partialEntity });
+        const context = {
+          graph: current(state.graph),
+          services: {},
+          validation: { validate: validateGraph }
         };
+        const result = executor.execute(operation, context);
 
-        const newName = partialEntity.name;
-        const isRenaming = newName !== undefined && newName !== oldName;
-
-        if (isRenaming) {
-          // 1. Collision Check
-          if (state.graph.entities[newName]) {
-            throw new Error(`Cannot rename: Entity "${newName}" already exists.`);
-          }
-
-          // 2. Construct new entity and assign to new key
-          state.graph.entities[newName] = { ...entity, ...partialEntity };
-
-          // 3. Delete old key to maintain O(1) integrity
-          delete state.graph.entities[oldName];
-
-          // 4. Synchronous Cascading Update: Relations (SCHEMA CORRECTED)
-          state.graph.relations.forEach((rel) => {
-            if (rel.source === oldName) rel.source = newName; 
-            if (rel.target === oldName) rel.target = newName; 
-          });
-
-          // 5. Synchronous Cascading Update: Endpoints
-          state.graph.endpoints.forEach((ep) => {
-            if (ep.entity === oldName) ep.entity = newName;
-          });
-        } else {
-          // Standard field update (no rename)
-          const entity = state.graph.entities[oldName]
-          if(!entity){
-            throw new Error(`Entity '${oldName}' not found`)
-          }
-          Object.assign(entity, partialEntity);
+        if (!result.success) {
+          const errors = result.diagnostics
+            .filter(d => d.severity === "error")
+            .map(d => d.message).join(" | ");
+          throw new Error(errors);
         }
+        state.graph = result.graph;
       }),
 
     removeEntity: (name) =>
       set((state) => {
-        delete state.graph.entities[name];
-        // Note: Cascading deletes for relations/endpoints will be handled 
-        // by the validation engine middleware later.
+        const operation = deleteEntityOperation({ name });
+        const context = {
+          graph: current(state.graph),
+          services: {},
+          validation: { validate: validateGraph }
+        };
+        const result = executor.execute(operation, context);
+
+        if (!result.success) {
+          const errors = result.diagnostics
+            .filter(d => d.severity === "error")
+            .map(d => d.message).join(" | ");
+          throw new Error(errors);
+        }
+        state.graph = result.graph;
       }),
 
     addRelation: (relation) =>
